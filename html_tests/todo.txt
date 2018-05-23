@@ -1,0 +1,2 @@
+copy .h files from sketch to this folder, using makefile
+gitignore sketch .h files

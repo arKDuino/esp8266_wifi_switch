@@ -16,6 +16,9 @@
 #define MAX_SSID_LENGTH 32 //according to 802.11
 #define MAX_PASSWD_LENGTH 64 //according to 802.11 - WPA specification
 
+//some relays have NC and NO pins inverted, here
+const bool INVERTED_NC_NO_PINS = true;
+
 //uncomment this when using a new es8266
 //#define ERASE_EEPROM_NEW_CHIP true
 
@@ -162,13 +165,31 @@ void turnLedOn()
 
 void turnRelayOn()
 {
-  pcf8574_pins |= PCF8574_RELAY_PIN;
+  if (INVERTED_NC_NO_PINS)
+  {
+    //ON is low when inverted
+    pcf8574_pins &= ~(PCF8574_RELAY_PIN);
+  }
+  else
+  {
+    pcf8574_pins |= PCF8574_RELAY_PIN;
+  }
+    
   updatePCF8574();
 }
 
 void turnRelayOff()
 {
-  pcf8574_pins &= ~(PCF8574_RELAY_PIN);
+  if (INVERTED_NC_NO_PINS)
+  {
+    //OFF is high when inverted
+    pcf8574_pins |= PCF8574_RELAY_PIN;
+  }
+  else
+  {
+    pcf8574_pins &= ~(PCF8574_RELAY_PIN);
+  }
+  
   updatePCF8574();
 }
 
