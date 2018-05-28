@@ -283,7 +283,7 @@ std::string getSwitchPage(char* page_title)
 	buf += "<div>\n";
 	buf += "<form action=\"setRelayOff\" method=\"POST\"><button>" + text_button_turn_off + "</button></form>\n";
 	buf += "</div>\n";
-	buf += "<h5>Bróine Eletronics</h5>\n";
+	buf += "<h5>Bróine Electronics</h5>\n";
 	buf += "</html>";
 	
 	return buf;
