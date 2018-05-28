@@ -47,7 +47,7 @@ int no_connection_timeout = 0;
 
 void seeEEPROM()
 {
-  Serial.println("Actual EEPROM content:");
+  Serial.println(F("Actual EEPROM content:"));
   char content[EEPROM_SIZE];
   for (int i = 0; i < EEPROM_SIZE; i++)
   {
@@ -65,7 +65,7 @@ void loadDataFromEEPROM(EEPROM_DATA_STRUCT* buf)
     content[i] = EEPROM.read(i);
   }
 
-  Serial.println("Converting this data from EEPROM into JSON:");
+  Serial.println(F("Converting this data from EEPROM into JSON:"));
   Serial.println(content);
 
   StaticJsonBuffer<EEPROM_SIZE> jsonBuffer;
@@ -101,7 +101,7 @@ void saveDataToEEPROM(EEPROM_DATA_STRUCT* buf)
   //get a char array
   char json_chars[EEPROM_SIZE];
   root.printTo(json_chars, EEPROM_SIZE);
-  Serial.println("Saving this JSON into EEPROM:");
+  Serial.println(F("Saving this JSON into EEPROM:"));
   Serial.println(json_chars);
 
   //write on EEPROM memory
@@ -200,7 +200,7 @@ void setupServerConfigMode()
   server.on("/setConfig", HTTP_GET, handleConfigPage);
   server.begin();
 
-  Serial.println("HTTP server started in config mode");
+  Serial.println(F("HTTP server started in config mode"));
 }
 
 void handleSetConfig()
@@ -271,20 +271,20 @@ void handleSetConfig()
     }
   }
 
-  Serial.println("New settings received");
-  Serial.print("Title:");
+  Serial.println(F("New settings received"));
+  Serial.print(F("Title:"));
   Serial.println(_title);
-  Serial.print("SSID:");
+  Serial.print(F("SSID:"));
   Serial.println(_ssid);
-  Serial.print("PASSWORD: ");
+  Serial.print(F("PASSWORD: "));
   Serial.println(_passwd);
-  Serial.print("USE DHCP: ");
+  Serial.print(F("USE DHCP: "));
   Serial.println(_dhcp);
-  Serial.print("IP: ");
+  Serial.print(F("IP: "));
   Serial.println(_ip);
-  Serial.print("SUBNET: ");
+  Serial.print(F("SUBNET: "));
   Serial.println(_subnet);
-  Serial.print("GATEWAY: ");
+  Serial.print(F("GATEWAY: "));
   Serial.println(_gateway);
 
   wifi_data.title = _title;
@@ -326,7 +326,7 @@ void setupServerNormalMode()
   server.on("/setRelayOff", HTTP_POST, handleTurnOff);
   server.begin();
 
-  Serial.println("HTTP server started in normal mode");
+  Serial.println(F("HTTP server started in normal mode"));
 }
 
 void handleMainPage()
@@ -340,14 +340,14 @@ void handleMainPage()
 void handleTurnOn()
 {
   turnRelayOn();
-  Serial.println("handleTurnOn();");
+  Serial.println(F("handleTurnOn();"));
   handleMainPage();
 }
 
 void handleTurnOff()
 {
   turnRelayOff();
-  Serial.println("handleTurnOff();");
+  Serial.println(F("handleTurnOff();"));
   handleMainPage();
 }
 
@@ -367,18 +367,18 @@ void setup() {
   os_timer_arm(&tEraserButton, 2000, true); //repeat every x miliseconds
 
   //begin EEPROM
-  Serial.println("Initializing EEPROM...");
+  Serial.println(F("Initializing EEPROM..."));
   EEPROM.begin(EEPROM_SIZE);
 
 #ifdef ERASE_EEPROM_NEW_CHIP
-  Serial.println("ERASING FOR NEW CHIP...");
+  Serial.println(F("ERASING FOR NEW CHIP..."));
   for (int i = 0; i < EEPROM_SIZE; i++)
   {
     EEPROM.write(i, 0);
   }
   EEPROM.commit();
 
-  Serial.println("...ERASED!");
+  Serial.println(F("...ERASED!"));
 
   wifi_data.title = "";
   wifi_data.ssid = "";
@@ -390,32 +390,32 @@ void setup() {
   wifi_data.deviceSubnet = "";
   saveDataToEEPROM(&wifi_data);
 
-  Serial.println("REMOVE #define ERASE_EEPROM_NEW_CHIP AND BURN FIRMWARE AGAIN!!");
+  Serial.println(F("REMOVE #define ERASE_EEPROM_NEW_CHIP AND BURN FIRMWARE AGAIN!!"));
   blinkStatusLights(255);
   while (true);
 #endif
 
   loadDataFromEEPROM(&wifi_data);
 
-  Serial.print("SSID:");
+  Serial.print(F("SSID:"));
   Serial.println(wifi_data.ssid);
 
-  Serial.print("PASSWORD:");
+  Serial.print(F("PASSWORD:"));
   Serial.println(wifi_data.passwd);
 
   //get MAC Address
-  Serial.print("MAC: ");
+  Serial.print(F("MAC: "));
   WiFi.macAddress(mac);
   Serial.print(mac[0], HEX);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(mac[1], HEX);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(mac[2], HEX);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(mac[3], HEX);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.print(mac[4], HEX);
-  Serial.print(":");
+  Serial.print(F(":"));
   Serial.println(mac[5], HEX);
 
   //if there is no ssid, go to config mode
@@ -423,7 +423,7 @@ void setup() {
   {
     is_in_config_mode = true;
     turnRelayOff();
-    Serial.println("Entering in config mode...");
+    Serial.println(F("Entering in config mode..."));
     WiFi.softAP("configuracao", "configuracao");
     setupServerConfigMode();
     return;
@@ -431,31 +431,31 @@ void setup() {
 
   //Connect to WiFi network
   Serial.println();
-  Serial.print("Connecting to ");
+  Serial.print(F("Connecting to "));
   Serial.println(wifi_data.ssid);
   WiFi.mode(WIFI_STA);
 
   if (wifi_data.use_DHCP)
   {
-    Serial.println("Using DHCP...");
+    Serial.println(F("Using DHCP..."));
     //nothing to do, DHCP is default
   }
   else
   {
-    Serial.println("Using static IP...");
+    Serial.println(F("Using static IP..."));
     // NETWORK: Static IP details...
     IPAddress ip;
-    Serial.print("IP: ");
+    Serial.print(F("IP: "));
     Serial.println(wifi_data.deviceIP);
     ip.fromString(wifi_data.deviceIP);
 
     IPAddress subnet;
-    Serial.print("Subnet: ");
+    Serial.print(F("Subnet: "));
     Serial.println(wifi_data.deviceGateway);
     subnet.fromString(wifi_data.deviceSubnet);
 
     IPAddress gateway;
-    Serial.print("Gateway: ");
+    Serial.print(F("Gateway: "));
     Serial.println(wifi_data.deviceGateway);
     gateway.fromString(wifi_data.deviceGateway);
 
@@ -474,7 +474,7 @@ void setup() {
     {      
       os_timer_disarm(&tEraserButton);
 
-      Serial.println("Password/SSID/IP wrong, settings will be deleted...");
+      Serial.println(F("Password/SSID/IP wrong, settings will be deleted..."));
       wifi_data.title = "";
       wifi_data.ssid = "";
       wifi_data.passwd = "";
@@ -491,15 +491,15 @@ void setup() {
   no_connection_timeout = 0;
 
   Serial.println();
-  Serial.println("WiFi connected");
-  Serial.print("Server started on ");
+  Serial.println(F("WiFi connected"));
+  Serial.print(F("Server started on "));
   wifi_data.lastIP = strdup(WiFi.localIP().toString().c_str());
   Serial.println(wifi_data.lastIP);
 
   //setup MDNS
   if (!MDNS.begin(wifi_data.title, WiFi.localIP()))
   {
-    Serial.println("Error setting up MDNS responder!");
+    Serial.println(F("Error setting up MDNS responder!"));
   }
 
   // Add service to MDNS-SD
@@ -544,7 +544,7 @@ void loop()
       wifi_data.deviceSubnet = "";
       saveDataToEEPROM(&wifi_data);
       turnRelayOff();
-      Serial.println("Memory cleaned, will reset soon...");
+      Serial.println(F("Memory cleaned, will reset soon..."));
       blinkStatusLights(10);
       ESP.reset();
     }
