@@ -16,7 +16,7 @@
 #define MAX_SSID_LENGTH 32 //according to 802.11
 #define MAX_PASSWD_LENGTH 64 //according to 802.11 - WPA specification
 
-//some relays have NC and NO pins inverted, here
+//some relays have NC and NO pins inverted
 const bool INVERTED_NC_NO_PINS = true;
 
 //uncomment this when using a new es8266
@@ -43,7 +43,6 @@ EEPROM_DATA_STRUCT wifi_data;
 os_timer_t tEraserButton;
 bool flag_checkbutton = false;
 bool is_in_config_mode = false;
-int no_connection_timeout = 0;
 
 void seeEEPROM()
 {
@@ -464,31 +463,13 @@ void setup() {
 
   WiFi.begin(wifi_data.ssid, wifi_data.passwd);
 
-  //try to connect to network, if cannot connect in x seconds,
-  //turn main relay off, reset config and and blink status lights forever
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(10);
-    no_connection_timeout++;
-    if (no_connection_timeout > 1500)
-    {      
-      os_timer_disarm(&tEraserButton);
-
-      Serial.println(F("Password/SSID/IP wrong, settings will be deleted..."));
-      wifi_data.title = "";
-      wifi_data.ssid = "";
-      wifi_data.passwd = "";
-      wifi_data.use_DHCP = false;
-      wifi_data.deviceIP = "";
-      wifi_data.deviceGateway = "";
-      wifi_data.deviceSubnet = "";
-      saveDataToEEPROM(&wifi_data);
-      turnRelayOff();
-      blinkStatusLights(255);  
-    }
+    turnLedOn();
+    delay(100);
+    turnLedOff();
+    delay(900);
   }
-
-  no_connection_timeout = 0;
 
   Serial.println();
   Serial.println(F("WiFi connected"));
