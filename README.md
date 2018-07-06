@@ -21,6 +21,11 @@ PS2: New ESP8266 chips eventually comes with rubbish data inside EEPROM, upload 
 ```
 Run the code, remove this #define and upload the code again. 
 
+Board mounted on PCB: (from https://jlcpcb.com/)
+
+![Final Board](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/complete_board.jpg)
+
+
 
 ### TODO:
  -  demonstration gif
