@@ -1,3 +1,6 @@
+//uncomment this when using a new es8266
+//#define ERASE_EEPROM_NEW_CHIP true
+
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <Wire.h>
@@ -18,9 +21,6 @@
 
 //some relays have NC and NO pins inverted
 const bool INVERTED_NC_NO_PINS = true;
-
-//uncomment this when using a new es8266
-//#define ERASE_EEPROM_NEW_CHIP true
 
 typedef struct
 {
