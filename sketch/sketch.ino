@@ -2,7 +2,7 @@
 //#define ERASE_EEPROM_NEW_CHIP true
 
 #include <ESP8266WebServer.h>
-#include <EEPROM.h>
+#include <EEPROM.h>        
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <user_interface.h>
@@ -15,7 +15,7 @@
 #define PCF8574_RESET_PIN 0b00000100 //PCF8574 RESET BUTTON
 #define GPIO_SDA 4 //esp8266 gpio4
 #define GPIO_SCL 5 //esp8266 gpio5
-#define EEPROM_SIZE 1024
+#define EEPROM_SIZE 512
 #define MAX_SSID_LENGTH 32 //according to 802.11
 #define MAX_PASSWD_LENGTH 64 //according to 802.11 - WPA specification
 
@@ -40,9 +40,9 @@ ESP8266WebServer server(80);
 uint8_t mac[6];
 uint8_t pcf8574_pins = 0; //PCF8574 state
 EEPROM_DATA_STRUCT wifi_data;
-os_timer_t tEraserButton;
 bool flag_checkbutton = false;
 bool is_in_config_mode = false;
+int check_button_counter = 0;
 
 void seeEEPROM()
 {
@@ -141,11 +141,6 @@ void blinkStatusLights(int times)
     delay(300);
     yield();
   }
-}
-
-void setFlagCheckButton(void* argss)
-{
-  flag_checkbutton = true;
 }
 
 void turnLedOff()
@@ -361,10 +356,6 @@ void setup() {
   turnRelayOn();
   turnLedOff();
 
-  //init timer to check button
-  os_timer_setfn(&tEraserButton, setFlagCheckButton, NULL); //set flag function
-  os_timer_arm(&tEraserButton, 2000, true); //repeat every x miliseconds
-
   //begin EEPROM
   Serial.println(F("Initializing EEPROM..."));
   EEPROM.begin(EEPROM_SIZE);
@@ -465,10 +456,7 @@ void setup() {
 
   while (WiFi.status() != WL_CONNECTED)
   {
-    turnLedOn();
     delay(100);
-    turnLedOff();
-    delay(900);
   }
 
   Serial.println();
@@ -496,6 +484,15 @@ void loop()
 {
   server.handleClient();
 
+  delay(100);
+  check_button_counter += 100;
+
+  if (check_button_counter > 10000)
+  {
+    check_button_counter = 0;
+    flag_checkbutton = true;
+  }
+
   //interrupt enabled flag, check if the reset button is pressed
   //if so, reset memory and restart
   if (flag_checkbutton)
@@ -512,9 +509,6 @@ void loop()
 
     if (_data & PCF8574_RESET_PIN)
     {
-      //disable interrupt
-      os_timer_disarm(&tEraserButton);
-
       //button pressed, clean data and save into eeprom
       wifi_data.title = "";
       wifi_data.ssid = "";
