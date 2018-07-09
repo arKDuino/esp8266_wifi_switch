@@ -10,6 +10,7 @@ A simple relay control for lamps, ovens, air conditioners, everything that plugs
 * Auto-restart when something goes wrong;
 * MDNS support (access via http://name.local);
 * All language specific strings are in constants_lang_pt.h
+* PCB and schematics developed with EasyEda
 
 Just write the .ino sketch into esp8266, turn on, press the button and connect to configuration AP.
 
@@ -23,9 +24,11 @@ Run the code, remove this #define and upload the code again.
 
 Board mounted on PCB: (from https://jlcpcb.com/)
 
+![Schematic](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/schematic.png)
+
+![PCB](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/PCB.png)
+
 ![Final Board](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/complete_board.jpg)
-
-
 
 ### TODO:
  -  demonstration gif
