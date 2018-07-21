@@ -2,11 +2,10 @@
 //#define ERASE_EEPROM_NEW_CHIP true
 
 #include <ESP8266WebServer.h>
-#include <EEPROM.h>        
+#include <EEPROM.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <user_interface.h>
-#include <ESP8266mDNS.h>
 #include "page_generator.h"
 
 #define PCF8574_ADDRESS 32 //PCF8574 pins A0, A1 and A2 wired to ground
@@ -168,7 +167,7 @@ void turnRelayOn()
   {
     pcf8574_pins |= PCF8574_RELAY_PIN;
   }
-    
+
   updatePCF8574();
 }
 
@@ -183,7 +182,7 @@ void turnRelayOff()
   {
     pcf8574_pins &= ~(PCF8574_RELAY_PIN);
   }
-  
+
   updatePCF8574();
 }
 
@@ -345,22 +344,8 @@ void handleTurnOff()
   handleMainPage();
 }
 
-void setup() {
-  //initialize Serial
-  Serial.begin(115200);
-  delay(100);
-
-  //init I2C
-  Wire.begin(GPIO_SDA, GPIO_SCL);
-  Wire.setClock(100000); //ensure clock of 100kHz
-  turnRelayOn();
-  turnLedOff();
-
-  //begin EEPROM
-  Serial.println(F("Initializing EEPROM..."));
-  EEPROM.begin(EEPROM_SIZE);
-
-#ifdef ERASE_EEPROM_NEW_CHIP
+void eraseEEPROM()
+{
   Serial.println(F("ERASING FOR NEW CHIP..."));
   for (int i = 0; i < EEPROM_SIZE; i++)
   {
@@ -383,6 +368,57 @@ void setup() {
   Serial.println(F("REMOVE #define ERASE_EEPROM_NEW_CHIP AND BURN FIRMWARE AGAIN!!"));
   blinkStatusLights(255);
   while (true);
+}
+
+void checkConfigMode()
+{
+  uint8_t _data = 0;
+  //i2c communication, request 1 byte
+  Wire.requestFrom(PCF8574_ADDRESS, 1);
+  if (Wire.available())
+  {
+    _data = Wire.read();
+  }
+  Wire.endTransmission();
+
+  if (_data & PCF8574_RESET_PIN)
+  {
+    //button pressed, clean data and save into eeprom
+    wifi_data.title = "";
+    wifi_data.ssid = "";
+    wifi_data.passwd = "";
+    wifi_data.use_DHCP = false;
+    wifi_data.deviceIP = "";
+    wifi_data.deviceGateway = "";
+    wifi_data.deviceSubnet = "";
+    saveDataToEEPROM(&wifi_data);
+    turnRelayOff();
+    Serial.println(F("Memory cleaned, will reset soon..."));
+    blinkStatusLights(10);
+    ESP.reset();
+  }
+}
+
+void setup() {
+  //initialize Serial
+  Serial.begin(115200);
+  delay(100);
+
+  //init I2C
+  Wire.begin(GPIO_SDA, GPIO_SCL);
+  Wire.setClock(100000); //ensure clock of 100kHz
+  turnRelayOn();
+  turnLedOff();
+
+  //begin EEPROM
+  Serial.println(F("Initializing EEPROM..."));
+  EEPROM.begin(EEPROM_SIZE);
+
+  //check if button was pressed when the device was turned on
+  checkConfigMode();
+
+#ifdef ERASE_EEPROM_NEW_CHIP
+  eraseEEPROM();
 #endif
 
   loadDataFromEEPROM(&wifi_data);
@@ -465,15 +501,6 @@ void setup() {
   wifi_data.lastIP = strdup(WiFi.localIP().toString().c_str());
   Serial.println(wifi_data.lastIP);
 
-  //setup MDNS
-  if (!MDNS.begin(wifi_data.title, WiFi.localIP()))
-  {
-    Serial.println(F("Error setting up MDNS responder!"));
-  }
-
-  // Add service to MDNS-SD
-  MDNS.addService("http", "tcp", 80);
-
   setupServerNormalMode();
 
   //blink lighst to tell everything is OK
@@ -498,30 +525,6 @@ void loop()
   if (flag_checkbutton)
   {
     flag_checkbutton = false;
-    uint8_t _data = 0;
-    //i2c communication, request 1 byte
-    Wire.requestFrom(PCF8574_ADDRESS, 1);
-    if (Wire.available())
-    {
-      _data = Wire.read();
-    }
-    Wire.endTransmission();
-
-    if (_data & PCF8574_RESET_PIN)
-    {
-      //button pressed, clean data and save into eeprom
-      wifi_data.title = "";
-      wifi_data.ssid = "";
-      wifi_data.passwd = "";
-      wifi_data.use_DHCP = false;
-      wifi_data.deviceIP = "";
-      wifi_data.deviceGateway = "";
-      wifi_data.deviceSubnet = "";
-      saveDataToEEPROM(&wifi_data);
-      turnRelayOff();
-      Serial.println(F("Memory cleaned, will reset soon..."));
-      blinkStatusLights(10);
-      ESP.reset();
-    }
+    checkConfigMode();
   }
 }

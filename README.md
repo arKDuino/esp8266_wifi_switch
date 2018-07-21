@@ -8,7 +8,6 @@ A simple relay control for lamps, ovens, air conditioners, everything that plugs
 * PCB included (made on easyEda);
 * Internally interfaces with PCF8574 input/output I2C module, which is extremely stable;
 * Auto-restart when something goes wrong;
-* MDNS support (access via http://name.local);
 * All language specific strings are in constants_lang_pt.h
 * PCB and schematics developed with EasyEda
 
