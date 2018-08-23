@@ -116,7 +116,7 @@ std::string getConfigurationInvalidPASSWD()
   return buf;  
 }
 
-std::string getConfigPage(uint8_t* mac, char* lastIP)
+std::string getConfigPage(uint8_t* mac)
 {
   std::string buf;
   char hex[2];  
@@ -170,14 +170,6 @@ tr:nth-child(even) { \
   sprintf(hex, "%X", mac[5]);
   buf += hex;    
   buf += "</td>";
-  buf += "<tr>";
-  buf += "<td>";
-  buf += text_last_ip;
-  buf += "</td>";
-  buf += "<td>";
-  buf += lastIP;
-  buf += "</td>";
-  buf += "</tr>";
   buf += "<tr>";
   buf += "<td>";
   buf += text_device_name;

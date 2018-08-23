@@ -26,7 +26,6 @@ typedef struct
   char* title = NULL;
   char* ssid = NULL;
   char* passwd = NULL;
-  char* lastIP = NULL; //format: 0.0.0.0
   bool use_DHCP = false;
   char* deviceIP = NULL; //format: 0.0.0.0
   char* deviceGateway = NULL; //format: 0.0.0.0
@@ -39,9 +38,6 @@ ESP8266WebServer server(80);
 uint8_t mac[6];
 uint8_t pcf8574_pins = 0; //PCF8574 state
 EEPROM_DATA_STRUCT wifi_data;
-bool flag_checkbutton = false;
-bool is_in_config_mode = false;
-int check_button_counter = 0;
 
 void seeEEPROM()
 {
@@ -74,7 +70,6 @@ void loadDataFromEEPROM(EEPROM_DATA_STRUCT* buf)
   buf->title = strdup(root["title"]);
   buf->ssid = strdup(root["ssid"]);
   buf->passwd = strdup(root["passwd"]);
-  buf->lastIP = strdup(root["lastIP"]);
   buf->use_DHCP = root["DHCP"];
   buf->deviceIP = strdup(root["deviceIP"]);
   buf->deviceGateway = strdup(root["deviceGateway"]);
@@ -90,7 +85,6 @@ void saveDataToEEPROM(EEPROM_DATA_STRUCT* buf)
   root["title"] = buf->title;
   root["ssid"] = buf->ssid;
   root["passwd"] = buf->passwd;
-  root["lastIP"] = buf->lastIP;
   root["DHCP"] = buf->use_DHCP;
   root["deviceIP"] = buf->deviceIP;
   root["deviceGateway"] = buf->deviceGateway;
@@ -304,7 +298,7 @@ void handleSetConfig()
 
 void handleConfigPage()
 {
-  std::string html = getConfigPage(mac, wifi_data.lastIP);
+  std::string html = getConfigPage(mac);
   String s_html = String(html.c_str());
   ESP.wdtFeed();
   server.send(200, TEXT_HTML, s_html);
@@ -358,7 +352,6 @@ void eraseEEPROM()
   wifi_data.title = "";
   wifi_data.ssid = "";
   wifi_data.passwd = "";
-  wifi_data.lastIP = "";
   wifi_data.use_DHCP = false;
   wifi_data.deviceIP = "";
   wifi_data.deviceGateway = "";
@@ -370,7 +363,7 @@ void eraseEEPROM()
   while (true);
 }
 
-void checkConfigMode()
+bool isConfigModeButtonPressed()
 {
   uint8_t _data = 0;
   //i2c communication, request 1 byte
@@ -383,20 +376,10 @@ void checkConfigMode()
 
   if (_data & PCF8574_RESET_PIN)
   {
-    //button pressed, clean data and save into eeprom
-    wifi_data.title = "";
-    wifi_data.ssid = "";
-    wifi_data.passwd = "";
-    wifi_data.use_DHCP = false;
-    wifi_data.deviceIP = "";
-    wifi_data.deviceGateway = "";
-    wifi_data.deviceSubnet = "";
-    saveDataToEEPROM(&wifi_data);
-    turnRelayOff();
-    Serial.println(F("Memory cleaned, will reset soon..."));
-    blinkStatusLights(10);
-    ESP.reset();
+    return true;
   }
+
+  return false;
 }
 
 void setup() {
@@ -407,31 +390,33 @@ void setup() {
   //init I2C
   Wire.begin(GPIO_SDA, GPIO_SCL);
   Wire.setClock(100000); //ensure clock of 100kHz
+
+  //relay ON by default
   turnRelayOn();
   turnLedOff();
 
   //begin EEPROM
   Serial.println(F("Initializing EEPROM..."));
   EEPROM.begin(EEPROM_SIZE);
-
-  //check if button was pressed when the device was turned on
-  checkConfigMode();
-
+  
 #ifdef ERASE_EEPROM_NEW_CHIP
   eraseEEPROM();
 #endif
 
+  //load data from EEPROM
   loadDataFromEEPROM(&wifi_data);
 
+  //debug messages
   Serial.print(F("SSID:"));
   Serial.println(wifi_data.ssid);
-
   Serial.print(F("PASSWORD:"));
   Serial.println(wifi_data.passwd);
 
   //get MAC Address
-  Serial.print(F("MAC: "));
   WiFi.macAddress(mac);
+
+  //Debug messages
+  Serial.print(F("MAC: "));
   Serial.print(mac[0], HEX);
   Serial.print(F(":"));
   Serial.print(mac[1], HEX);
@@ -444,15 +429,16 @@ void setup() {
   Serial.print(F(":"));
   Serial.println(mac[5], HEX);
 
-  //if there is no ssid, go to config mode
-  if (strlen(wifi_data.ssid) <= 1)
+  //check if button was pressed when the device was turned on
+  //enter in config mode
+  if (isConfigModeButtonPressed())
   {
-    is_in_config_mode = true;
     turnRelayOff();
+    blinkStatusLights(5);
     Serial.println(F("Entering in config mode..."));
     WiFi.softAP("configuracao", "configuracao");
     setupServerConfigMode();
-    return;
+    return;    
   }
 
   //Connect to WiFi network
@@ -497,9 +483,6 @@ void setup() {
 
   Serial.println();
   Serial.println(F("WiFi connected"));
-  Serial.print(F("Server started on "));
-  wifi_data.lastIP = strdup(WiFi.localIP().toString().c_str());
-  Serial.println(wifi_data.lastIP);
 
   setupServerNormalMode();
 
@@ -510,21 +493,4 @@ void setup() {
 void loop()
 {
   server.handleClient();
-
-  delay(100);
-  check_button_counter += 100;
-
-  if (check_button_counter > 10000)
-  {
-    check_button_counter = 0;
-    flag_checkbutton = true;
-  }
-
-  //interrupt enabled flag, check if the reset button is pressed
-  //if so, reset memory and restart
-  if (flag_checkbutton)
-  {
-    flag_checkbutton = false;
-    checkConfigMode();
-  }
 }
