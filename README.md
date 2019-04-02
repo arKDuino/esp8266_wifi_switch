@@ -29,5 +29,4 @@ Board mounted on PCB: (from https://jlcpcb.com/)
 
 ![Final Board](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/complete_board.jpg)
 
-### TODO:
- -  demonstration gif
+![Using with wifi](https://raw.githubusercontent.com/gustavofbreunig/esp8266_wifi_switch/master/using.gif)
